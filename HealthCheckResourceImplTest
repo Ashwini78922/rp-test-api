@@ -1,0 +1,72 @@
+package com.scb.channels.research.api;
+
+import com.scb.channels.foundation.util.jackson.JacksonMarshaller;
+import com.scb.channels.foundation.util.jackson.Marshaller;
+import com.scb.channels.research.model.healthcheck.CassandraHealthCheckResponse;
+import com.scb.channels.research.resource.HealthCheckResourceImpl;
+import com.scb.channels.research.service.HealthCheckServiceImpl;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
+public class HealthCheckResourceImplTest {
+
+    @InjectMocks
+    private HealthCheckResourceImpl healthCheckResource;
+
+    @Mock
+    private Marshaller marshaller;
+
+    @Mock
+    private HealthCheckServiceImpl healthCheckService;
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
+
+    private CassandraHealthCheckResponse cassandraHealthCheckResponse = null;
+
+    private static final String CASSANDRA_RESPONSE_JSON = "{\n" +
+            "  \"response\": [\n" +
+            "    {\n" +
+            "      \"host\": \"10.23.210.26\",\n" +
+            "      \"state\": \"UP\",\n" +
+            "      \"dataCenter\": \"datacenter1\",\n" +
+            "      \"rack\": \"rack1\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"host\": \"10.23.210.25\",\n" +
+            "      \"state\": \"UP\",\n" +
+            "      \"dataCenter\": \"datacenter1\",\n" +
+            "      \"rack\": \"rack1\"\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}";
+
+    public static CassandraHealthCheckResponse getCassandraHealthCheckResponse() {
+        Marshaller marshaller = new JacksonMarshaller();
+        CassandraHealthCheckResponse cassandraHealthCheckResponse = marshaller.unmarshalLenient(CASSANDRA_RESPONSE_JSON, CassandraHealthCheckResponse.class);
+        return cassandraHealthCheckResponse;
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        cassandraHealthCheckResponse = HealthCheckResourceImplTest.getCassandraHealthCheckResponse();
+    }
+
+    @Test
+    public void shouldRetrieveAndMarshallHealthCheckForCassandra() {
+        when(healthCheckService.getCassandraConnectionStatus()).thenReturn(cassandraHealthCheckResponse);
+        when(marshaller.marshalLenient(cassandraHealthCheckResponse)).thenReturn(CASSANDRA_RESPONSE_JSON);
+        assertThat(healthCheckResource.getCassandraConnectionStatus()).isEqualTo(CASSANDRA_RESPONSE_JSON);
+    }
+
+}

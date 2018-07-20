@@ -1,0 +1,73 @@
+package com.scb.channels.research.api;
+
+import com.scb.channels.foundation.util.jackson.JacksonMarshaller;
+import com.scb.channels.foundation.util.jackson.Marshaller;
+import com.scb.channels.research.model.ServiceContext;
+import com.scb.channels.research.model.ServiceContextResponse;
+import com.scb.channels.research.model.User;
+import com.scb.channels.research.resource.ServiceContextResourceImpl;
+import com.scb.channels.research.user.service.UserService;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+@Ignore
+@RunWith(MockitoJUnitRunner.class)
+public class ServiceContextResourceImplTest {
+
+    private ServiceContextResourceImpl serviceContextResource;
+
+    private Marshaller marshaller = new JacksonMarshaller();
+
+    private UserService userService = mock(UserService.class);
+
+    private User user = mock(User.class);
+
+    private ServiceContext serviceContext = null;
+    private ServiceContextResponse serviceContextResponse = null;
+
+
+    private static final String SERVICE_CONTEXT_REQUEST_JSON = "{\n" +
+            "  \"serviceContext\": {\n" +
+            "      \"userId\" : \"1336579@sc.com\",\n" +
+            "      \"groupId\" : \"GSG03785\",\n" +
+            "      \"language\" : \"en\",\n" +
+            "      \"geoLocation\" : \"XX\"\n" +
+            "    }\n" +
+            "}";
+
+    private static final String SERVICE_CONTEXT_RESPONSE_JSON = "{\"transactionSuccess\":true,\"serviceContext\":{\"plexId\":\"\",\"groupId\":\"GSG03785\",\"profileId\":\"\",\"uiVersion\":\"\",\"idleTimeout\":0,\"absoluteTimeout\":0,\"language\":\"\",\"appAccessType\":\"\"}}";
+
+    private static final String EMAIL = "1336579@sc.com";
+
+    @Before
+    public void setUp() throws Exception {
+        serviceContext = getServiceContext();
+        serviceContextResponse = getServiceContextResponse();
+        serviceContextResource = new ServiceContextResourceImpl(marshaller, userService);
+
+    }
+
+
+    @Test
+    public void shouldRetrieveAndMarshallServiceContext() {
+        when(userService.loadUserByEmail(EMAIL)).thenReturn(user);
+        assertThat(serviceContextResource.getServiceContext(EMAIL, SERVICE_CONTEXT_REQUEST_JSON)).isEqualTo(SERVICE_CONTEXT_RESPONSE_JSON);
+    }
+
+    public static ServiceContext getServiceContext() {
+        return ServiceContext.builder()
+                .build();
+    }
+
+    public  ServiceContextResponse getServiceContextResponse() {
+        ServiceContextResponse serviceContextResponse = marshaller.unmarshalLenient(SERVICE_CONTEXT_RESPONSE_JSON, ServiceContextResponse.class);
+        return serviceContextResponse;
+    }
+}
